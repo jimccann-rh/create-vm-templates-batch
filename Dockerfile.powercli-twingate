@@ -1,0 +1,48 @@
+FROM docker.io/fedora:latest
+
+# Install prerequisites
+RUN dnf install -y \
+    wget \
+    curl \
+    ca-certificates \
+    iproute \
+    procps-ng \
+    && dnf clean all
+
+# Install PowerShell (using RHEL 9 repo - compatible with Fedora 42+)
+RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc && \
+    dnf install -y https://packages.microsoft.com/config/rhel/9/packages-microsoft-prod.rpm && \
+    dnf install -y powershell && \
+    dnf clean all
+
+# Install VMware PowerCLI
+RUN pwsh -Command "Set-PSRepository -Name PSGallery -InstallationPolicy Trusted" && \
+    pwsh -Command "Install-Module -Name VMware.PowerCLI -Scope AllUsers -Force" && \
+    pwsh -Command "Set-PowerCLIConfiguration -InvalidCertificateAction Ignore -ParticipateInCEIP \$false -Confirm:\$false"
+
+# Install Twingate
+RUN curl -s https://binaries.twingate.com/client/linux/install.sh | bash
+
+# Create working directory
+WORKDIR /workspace
+
+# Make directories writable for OpenShift (runs as random non-root UID)
+# chmod -R covers any files the Twingate installer left inside /etc/twingate
+RUN chmod -R 777 /etc/twingate && \
+    mkdir -p /run/twingate && chmod 777 /run/twingate && \
+    mkdir -p /data && chmod 777 /data && \
+    chmod -R g=u /workspace
+
+# Copy entrypoint script
+COPY entrypoint-powercli.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Copy PowerShell script and templates config
+COPY create-vm-templates-batch.ps1 /workspace/
+COPY templates.json /workspace/
+
+# Twingate runs in userspace mode (HTTP proxy) - no TUN device needed
+ENV TWINGATE_HTTP_PROXY=127.0.0.1:9999
+ENV TWINGATE_TUN=off
+
+ENTRYPOINT ["/entrypoint.sh"]

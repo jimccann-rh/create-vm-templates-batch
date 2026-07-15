@@ -1,0 +1,93 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: powercli-secrets
+  namespace: vsphere-infra-helpers
+  labels:
+    app: powercli-twingate
+type: Opaque
+stringData:
+  TWINGATE_SERVICE_KEY: "REPLACE_WITH_TWINGATE_SERVICE_KEY_JSON"
+  VCENTER_USER: "REPLACE_WITH_VCENTER_USER"
+  VCENTER_PASSWORD: "REPLACE_WITH_VCENTER_PASSWORD"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: powercli-config
+  namespace: vsphere-infra-helpers
+  labels:
+    app: powercli-twingate
+data:
+  VCENTER_SERVER: "10.93.76.50"
+  VCENTER_DATACENTER: "wldn-130-DC"
+  VCENTER_CLUSTER: "wldn-130-cl01"
+  VCENTER_DATASTORE: "wldn-130-cl01-vsan01"
+  VM_FOLDER: "windows-golden-images"
+  CONTENT_LIBRARY: "win-images"
+  NETWORK_NAME: "VM Network"
+  TEMPLATES_CONFIG: "templates.json"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: powercli-templates-data
+  namespace: vsphere-infra-helpers
+  labels:
+    app: powercli-twingate
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: powercli-twingate
+  namespace: vsphere-infra-helpers
+  labels:
+    app: powercli-twingate
+spec:
+  schedule: "0 6 * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    metadata:
+      labels:
+        app: powercli-twingate
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 1800
+      template:
+        metadata:
+          labels:
+            app: powercli-twingate
+        spec:
+          restartPolicy: Never
+          containers:
+            - name: powercli-twingate
+              image: quay.io/YOURORG/powercli-twingate:latest
+              imagePullPolicy: Always
+              envFrom:
+                - secretRef:
+                    name: powercli-secrets
+                - configMapRef:
+                    name: powercli-config
+              volumeMounts:
+                - name: templates-data
+                  mountPath: /data
+              resources:
+                requests:
+                  memory: "512Mi"
+                  cpu: "250m"
+                limits:
+                  memory: "2Gi"
+                  cpu: "1"
+          volumes:
+            - name: templates-data
+              persistentVolumeClaim:
+                claimName: powercli-templates-data

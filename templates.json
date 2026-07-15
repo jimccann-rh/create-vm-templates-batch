@@ -1,0 +1,26 @@
+[
+  {
+    "name": "windows-server-2022-template-ipv6-disabled",
+    "enabled": true,
+    "description": "Windows Server 2022 with IPv6 disabled",
+    "last_deployed_version": "2",
+    "last_deployed_date": "2026-07-09T13:43:53Z",
+    "content_library_item_id": "16d505c5-a840-4c08-8ff2-4fbd5ef34b2d"
+  },
+  {
+    "name": "windows-server-2025-template-ipv6-disabled",
+    "enabled": true,
+    "description": "Windows Server 2025 with IPv6 disabled",
+    "last_deployed_version": "2",
+    "last_deployed_date": "2026-07-09T13:45:02Z",
+    "content_library_item_id": "9db0a64f-4fb3-4369-a474-7a258835d4c4"
+  },
+  {
+    "name": "wintest",
+    "enabled": true,
+    "description": "Windows test template",
+    "last_deployed_version": "5",
+    "last_deployed_date": "2026-07-09T14:37:22Z",
+    "content_library_item_id": "ba49b258-a66a-458e-bc0a-df219a2edaa2"
+  }
+]
