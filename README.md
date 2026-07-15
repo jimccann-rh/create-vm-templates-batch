@@ -208,7 +208,6 @@ Total: 2 | Success: 2 | Failed: 0
 | `templates.json` | Template configuration and version tracking |
 | `create-vm-templates-batch.ps1` | Batch processing script (recommended) |
 | `install-powercli.sh` | PowerCLI installation script |
-| `install-requirements.sh` | Python dependencies (legacy, not used) |
 
 ## Environment
 
