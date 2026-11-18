@@ -41,6 +41,10 @@ RUN chmod +x /entrypoint.sh
 COPY create-vm-templates-batch.ps1 /workspace/
 COPY templates.json /workspace/
 
+# IPv4 only - IPv6 is never used or enabled (see entrypoint.sh for the runtime sysctl)
+ENV DOTNET_SYSTEM_NET_DISABLEIPV6=1
+RUN printf 'net.ipv6.conf.all.disable_ipv6 = 1\nnet.ipv6.conf.default.disable_ipv6 = 1\nnet.ipv6.conf.lo.disable_ipv6 = 1\n' > /etc/sysctl.d/99-disable-ipv6.conf
+
 # Twingate runs in userspace mode (HTTP proxy) - no TUN device needed
 ENV TWINGATE_HTTP_PROXY=127.0.0.1:9999
 ENV TWINGATE_TUN=off

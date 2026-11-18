@@ -26,6 +26,14 @@ if [ -z "$VCENTER_PASSWORD" ]; then
     exit 1
 fi
 
+# IPv4 only - disable IPv6 in the namespace if we have the privileges for it
+if sysctl -w net.ipv6.conf.all.disable_ipv6=1 net.ipv6.conf.default.disable_ipv6=1 \
+    net.ipv6.conf.lo.disable_ipv6=1 >/dev/null 2>&1; then
+    echo "✓ IPv6 disabled (IPv4 only)"
+else
+    echo "ℹ Cannot disable IPv6 (needs privileged/NET_ADMIN) - relying on IPv4-only client settings"
+fi
+
 # Set runtime dir for OpenShift (random UID has no /run/user/<uid>)
 export XDG_RUNTIME_DIR=/tmp/runtime
 mkdir -p "$XDG_RUNTIME_DIR"
@@ -70,7 +78,7 @@ while [ $RETRIES -lt $MAX_RETRIES ]; do
         exit 1
     fi
     # Check if twingated is online and has loaded resources
-    if curl -s --proxy http://127.0.0.1:9999 -k -o /dev/null -w "%{http_code}" "https://$VCENTER_SERVER" 2>/dev/null | grep -qE "^(200|301|302|401|403|500)"; then
+    if curl -4 -s --proxy http://127.0.0.1:9999 -k -o /dev/null -w "%{http_code}" "https://$VCENTER_SERVER" 2>/dev/null | grep -qE "^(200|301|302|401|403|500)"; then
         echo "✓ Twingate proxy can reach $VCENTER_SERVER"
         break
     fi

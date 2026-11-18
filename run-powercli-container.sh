@@ -51,9 +51,11 @@ echo ""
 mkdir -p "$(pwd)/data"
 
 # Run container with Podman (no elevated privileges needed - userspace mode)
+# No --network=host: the proxy is container-local 127.0.0.1:9999, and host networking
+# would expose the host's IPv6 stack to twingated (it then retries IPv6 relays that
+# have no route and logs STUN failures).
 podman run --rm --replace -it \
     --name powercli-twingate \
-    --network=host \
     -v "$(pwd)/data:/data:Z" \
     -e TWINGATE_SERVICE_KEY="$TWINGATE_SERVICE_KEY" \
     -e VCENTER_SERVER="$VCENTER_SERVER" \
